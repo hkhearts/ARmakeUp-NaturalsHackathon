@@ -15,16 +15,16 @@
 
 ## 🌟 Key Features
 
-* **Real-Time AR Tracking**: Utilizes Google's MediaPipe Face Mesh for precise, lag-free facial landmark tracking.
-* **Deep Skin Analysis**: The Python backend processes webcam frames using the LAB color space to determine your exact Surface Tone (Lightness) and Undertone (Cool, Neutral, Warm).
-* **Smart Shade Matrix Matrix**: Maps your skin analysis to an internal beauty matrix to automatically generate custom hex codes for:
-  * 🧴 Foundation (Perfect match)
-  * ✨ Concealer (Calculated 1-2 shades lighter)
-  * 🤎 Contour (Calculated shadows for cheekbones)
-  * 😊 Blush (Undertone-specific flush)
-  * 💋 Lipstick (Harmonized lip color)
-* **Full Manual Control**: Disagree with the AI? Use the built-in color pickers and intensity sliders to customize your look instantly.
-* **Exportable Beauty Report**: Generate and download a personalized `.txt` report of your recommended hex codes to help you shop for real physical products.
+- **Real-Time AR Tracking**: Utilizes Google's MediaPipe Face Mesh for precise, lag-free facial landmark tracking.
+- **Deep Skin Analysis**: The Python backend processes webcam frames using the LAB color space to determine your exact Surface Tone (Lightness) and Undertone (Cool, Neutral, Warm).
+- **Smart Shade Matrix Matrix**: Maps your skin analysis to an internal beauty matrix to automatically generate custom hex codes for:
+  - 🧴 Foundation (Perfect match)
+  - ✨ Concealer (Calculated 1-2 shades lighter)
+  - 🤎 Contour (Calculated shadows for cheekbones)
+  - 😊 Blush (Undertone-specific flush)
+  - 💋 Lipstick (Harmonized lip color)
+- **Full Manual Control**: Disagree with the AI? Use the built-in color pickers and intensity sliders to customize your look instantly.
+- **Exportable Beauty Report**: Generate and download a personalized `.txt` report of your recommended hex codes to help you shop for real physical products.
 
 ---
 
@@ -40,12 +40,14 @@
 To run this project locally, you will need to start the Python backend and open the HTML frontend.
 
 ### Prerequisites
-* Python 3.8+
-* A modern web browser (Chrome, Edge, Safari)
-* A working webcam
+
+- Python 3.8+
+- A modern web browser (Chrome, Edge, Safari)
+- A working webcam
 
 ### Step 1: Clone the Repository
-```bash
+
+````bash
 git clone [https://github.com/hkhearts/ARmakeUp-NaturalsHackathon.git]
 cd ARmakeUp-NaturalsHackathon
 
@@ -86,19 +88,19 @@ http://localhost:5500/index.html
 
 ## 🎮 Usage Guide
 
-- **Allow Camera Access**  
+- **Allow Camera Access**
   When prompted, allow webcam permissions.
 
-- **Analyze Skin**  
+- **Analyze Skin**
   Click **"🔍 Auto Match Skin Tone"** and hold still in good lighting.
 
-- **Toggle Makeup**  
+- **Toggle Makeup**
   Use buttons like Foundation, Concealer, Contour, etc.
 
-- **Customize**  
+- **Customize**
   Adjust opacity with sliders and choose colors using hex codes.
 
-- **Download**  
+- **Download**
   Click **"📝 Download Beauty Report"** to save your shade profile.
 
 ---
@@ -129,3 +131,4 @@ http://localhost:5500/index.html
 
 Built with ❤️ bridging the gap between Computer Vision and Beauty Tech.
 
+````
