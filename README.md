@@ -49,57 +49,61 @@ To run this project locally, you will need to start the Python backend and open 
 git clone [https://github.com/hkhearts/ARmakeUp-NaturalsHackathon.git]
 cd ARmakeUp-NaturalsHackathon
 
-Step 2: Set Up the Backend
+### Step 2: Set Up the Backend
 
 Install the required Python dependencies:
 
-
-
-Bash
-
-
-
+```bash
 pip install fastapi uvicorn opencv-python numpy python-multipart
 
+
 Start the FastAPI server:
-
-
-
-Bash
-
-
-
 uvicorn main:app --reload
 
 The server will start running on http://127.0.0.1:8000.
 
 
 
-Step 3: Launch the Frontend
+## Step 3: Launch the Frontend
 
-Because the frontend requires camera permissions, it is best run on a local server rather than just double-clicking the file.
+Because the frontend requires camera permissions, it is best run on a local server rather than just opening the file directly.
 
-If you use VS Code, install the Live Server extension, right-click index.html, and select "Open with Live Server".
+### Option A (VS Code)
+If you use VS Code:
+- Install the Live Server extension
+- Right-click `index.html`
+- Click **"Open with Live Server"**
 
-Alternatively, you can use Python to serve the folder:
+### Option B (Python)
 
+```bash
 python -m http.server 5500
 
-Then navigate to http://localhost:5500/index.html in your browser.
+Then open:
+http://localhost:5500/index.html
 
-🎮 Usage Guide
+---
 
-Allow Camera Access: When prompted by your browser, allow webcam permissions.
+## 🎮 Usage Guide
 
-Analyze Skin: Click the "🔍 Auto Match Skin Tone" button. Hold still in good lighting while the Python server analyzes your face.
+- **Allow Camera Access**  
+  When prompted, allow webcam permissions.
 
-Toggle Makeup: Click the buttons (Foundation, Concealer, Contour, etc.) to toggle the AR rendering on and off.
+- **Analyze Skin**  
+  Click **"🔍 Auto Match Skin Tone"** and hold still in good lighting.
 
-Customize: Use the sliders to adjust opacity and click the color swatches to manually pick new hex codes.
+- **Toggle Makeup**  
+  Use buttons like Foundation, Concealer, Contour, etc.
 
-Download: Click "📝 Download Beauty Report" to save your custom shade profile!
+- **Customize**  
+  Adjust opacity with sliders and choose colors using hex codes.
 
-📂 Project Structure
+- **Download**  
+  Click **"📝 Download Beauty Report"** to save your shade profile.
+
+---
+
+## 📂 Project Structure
 
 
 📦 ai-beauty-studio
@@ -111,18 +115,17 @@ Download: Click "📝 Download Beauty Report" to save your custom shade profile!
 ┗ 📜 README.md # Project documentation
 
 
-🔮 Future Enhancements
+---
 
-[ ] Add Eye Makeup (Eyeliner, Eyeshadow palettes)
+## 🔮 Future Enhancements
 
-[ ] Implement varied lip finishes (Matte, Glossy, Metallic)
+- [ ] Add Eye Makeup (Eyeliner, Eyeshadow palettes)
+- [ ] Implement varied lip finishes (Matte, Glossy, Metallic)
+- [ ] Deploy backend to a cloud service (Render / Heroku)
+- [ ] Add support for taking and saving photos
 
-[ ] Deploy backend to a cloud service (Render/Heroku)
 
-[ ] Add support for taking and saving photos
-
-
-📄 Work
+## 📄 Work
 
 Built with ❤️ bridging the gap between Computer Vision and Beauty Tech.
 
