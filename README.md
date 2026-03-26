@@ -47,7 +47,6 @@ To run this project locally, you will need to start the Python backend and open 
 
 ### Step 1: Clone the Repository
 
-````bash
 git clone [https://github.com/hkhearts/ARmakeUp-NaturalsHackathon.git]
 cd ARmakeUp-NaturalsHackathon````
 
@@ -55,7 +54,6 @@ cd ARmakeUp-NaturalsHackathon````
 
 Install the required Python dependencies:
 
-```bash
 pip install fastapi uvicorn opencv-python numpy python-multipart
 
 
@@ -78,7 +76,6 @@ If you use VS Code:
 
 ### Option B (Python)
 
-```bash
 python -m http.server 5500
 
 Then open:
