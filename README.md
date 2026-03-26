@@ -127,5 +127,3 @@ http://localhost:5500/index.html
 ## 📄 Work
 
 Built with ❤️ bridging the gap between Computer Vision and Beauty Tech.
-
-````
