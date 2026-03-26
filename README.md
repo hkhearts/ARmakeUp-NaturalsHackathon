@@ -8,9 +8,6 @@
 
 **AI Beauty Studio AR** is a real-time, browser-based Augmented Reality application that uses Computer Vision to analyze your skin tone and undertone, automatically recommending and applying perfectly matched makeup shades directly to your face.
 
-> **Note:** Add a GIF or screenshot of the app running here!
-> `![App Demo](link_to_your_image_or_gif.gif)`
-
 ---
 
 ## 🌟 Key Features
