@@ -49,7 +49,7 @@ To run this project locally, you will need to start the Python backend and open 
 
 ````bash
 git clone [https://github.com/hkhearts/ARmakeUp-NaturalsHackathon.git]
-cd ARmakeUp-NaturalsHackathon
+cd ARmakeUp-NaturalsHackathon````
 
 ### Step 2: Set Up the Backend
 
