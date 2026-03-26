@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ultimate AI Beauty AR</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+
+<style>
+body { margin:0; overflow:hidden; background:black; font-family:Arial; }
+video, canvas { position:absolute; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+
+#ui {
+  position:absolute; top:20px; left:20px; backdrop-filter: blur(15px);
+  background: rgba(0,0,0,0.6); padding:20px; border-radius:15px;
+  color:white; width:340px; box-shadow: 0 0 20px rgba(0,0,0,0.4);
+  max-height: 90vh; overflow-y: auto;
+}
+h3 { margin-top:0; text-align:center; color: #ff9a9e; }
+
+.controls { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px; }
+button {
+  padding:10px; border:none; border-radius:10px; background: rgba(255,255,255,0.15);
+  color:white; cursor:pointer; font-weight:bold; transition:0.3s;
+}
+button:hover { background: rgba(255,255,255,0.3); }
+button.active { background: linear-gradient(45deg, #ff4d6d, #ff9a9e); color:white; }
+
+.action-btn { width: 100%; background: #4caf50; margin-bottom: 10px; }
+.action-btn:hover { background: #45a049; }
+.report-btn { width: 100%; margin-top: 15px; background: rgba(255,255,255,0.2); border: 1px solid #ff9a9e; }
+.report-btn:hover { background: rgba(255,255,255,0.4); }
+
+.results-box {
+  background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;
+  margin-top: 10px; font-size: 14px; margin-bottom: 15px;
+}
+
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.slider-container { flex-grow: 1; margin-left: 10px; }
+.slider-container label { font-size: 12px; display: block; margin-bottom: 2px;}
+input[type=range] { width: 100%; -webkit-appearance: none; background: rgba(255,255,255,0.2); height: 6px; border-radius: 5px; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #ff4d6d; border-radius: 50%; }
+input[type=color] { width: 30px; height: 30px; border: none; border-radius: 5px; cursor: pointer; background: transparent; }
+</style>
+</head>
+<body>
+
+<video id="video" autoplay muted playsinline style="display: none;"></video>
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+  <h3>✨ AI Beauty Studio</h3>
+  
+  <button class="action-btn" onclick="analyzeFacePython()">🔍 Auto Match Skin Tone</button>
+
+  <div class="results-box">
+    <div id="surfaceTone">Surface Tone: Waiting...</div>
+    <div id="underTone">Undertone: Waiting...</div>
+  </div>
+
+  <div class="controls">
+    <button id="foundBtn" onclick="toggleMakeup('foundation', this)">🧴 Foundation</button>
+    <button id="concealBtn" onclick="toggleMakeup('concealer', this)">✨ Concealer</button>
+    <button id="contourBtn" onclick="toggleMakeup('contour', this)">🤎 Contour</button>
+    <button id="blushBtn" onclick="toggleMakeup('blush', this)">😊 Blush</button>
+    <button id="lipBtn" onclick="toggleMakeup('lipstick', this)">💋 Lipstick</button>
+  </div>
+
+  <div id="manual-controls">
+      </div>
+
+  <button class="report-btn" onclick="generateReport()">📝 Download Beauty Report</button>
+
+</div>
+
+<script>
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// Base state for colors (Hex) and Intensities (Alpha)
+let makeupState = {
+  foundation: { hex: "#E0C8B7", alpha: 0.15 },
+  concealer:  { hex: "#EDE4DD", alpha: 0.25 },
+  contour:    { hex: "#935E38", alpha: 0.30 },
+  blush:      { hex: "#E86F88", alpha: 0.35 },
+  lipstick:   { hex: "#C42D5F", alpha: 0.60 }
+};
+
+let activeMakeups = new Set();
+
+// Initialize UI Controls
+const products = ['foundation', 'concealer', 'contour', 'blush', 'lipstick'];
+const manualContainer = document.getElementById('manual-controls');
+
+products.forEach(prod => {
+    manualContainer.innerHTML += `
+    <div class="control-row">
+        <input type="color" id="color_${prod}" value="${makeupState[prod].hex}" onchange="updateState('${prod}', 'hex', this.value)">
+        <div class="slider-container">
+            <label>${prod.charAt(0).toUpperCase() + prod.slice(1)} Intensity</label>
+            <input type="range" id="alpha_${prod}" min="0" max="1" step="0.01" value="${makeupState[prod].alpha}" oninput="updateState('${prod}', 'alpha', this.value)">
+        </div>
+    </div>`;
+});
+
+function updateState(product, key, value) {
+    makeupState[product][key] = key === 'alpha' ? parseFloat(value) : value;
+}
+
+// Helper: Convert Hex + Alpha to RGBA string for canvas drawing
+function getRgba(product) {
+    let hex = makeupState[product].hex.replace('#', '');
+    let r = parseInt(hex.substring(0, 2), 16);
+    let g = parseInt(hex.substring(2, 4), 16);
+    let b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${makeupState[product].alpha})`;
+}
+
+// Initialize Webcam
+navigator.mediaDevices.getUserMedia({ video: true }).then(stream => video.srcObject = stream);
+
+const mesh = new FaceMesh({ locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+mesh.setOptions({ maxNumFaces: 1, refineLandmarks: true });
+
+function toggleMakeup(type, btn){
+  if(activeMakeups.has(type)){
+    activeMakeups.delete(type); btn.classList.remove("active");
+  } else {
+    activeMakeups.add(type); btn.classList.add("active");
+  }
+}
+
+// 🚀 Send frame to Python Backend
+async function analyzeFacePython() {
+  document.getElementById("underTone").innerText = "Analyzing Matrix...";
+  
+  const snapCanvas = document.createElement('canvas');
+  snapCanvas.width = video.videoWidth;
+  snapCanvas.height = video.videoHeight;
+  snapCanvas.getContext('2d').drawImage(video, 0, 0);
+  
+  const base64Image = snapCanvas.toDataURL('image/jpeg', 0.8);
+  const formData = new FormData();
+  formData.append("image", base64Image);
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/analyze", {
+      method: "POST", body: formData
+    });
+    const data = await response.json();
+    
+    document.getElementById("surfaceTone").innerText = "Tone: " + data.surface_tone;
+    document.getElementById("underTone").innerText = "Undertone: " + data.undertone;
+
+    // Update state with AI Recommendations
+    products.forEach(prod => {
+        let aiHex = data.recommendations[prod];
+        makeupState[prod].hex = aiHex;
+        document.getElementById(`color_${prod}`).value = aiHex; // Update manual UI picker
+        
+        // Turn on automatically if not active
+        if(!activeMakeups.has(prod)) {
+            let btn = document.getElementById(prod === 'lipstick' ? 'lipBtn' : (prod === 'foundation' ? 'foundBtn' : (prod === 'concealer' ? 'concealBtn' : prod+'Btn')));
+            toggleMakeup(prod, btn);
+        }
+    });
+
+  } catch (error) {
+    document.getElementById("underTone").innerText = "Server Error. Is Python running?";
+    console.error(error);
+  }
+}
+
+// 📝 Generate Beauty Report Logic
+function generateReport() {
+    let report = "💄 AI BEAUTY STUDIO - PERSONALIZED SHADE REPORT\n";
+    report += "=================================================\n\n";
+
+    let surfaceText = document.getElementById("surfaceTone").innerText;
+    let underText = document.getElementById("underTone").innerText;
+
+    if(surfaceText.includes("Waiting")) {
+        report += "⚠️ Deep Analysis Status: NOT RUN\n";
+        report += "Note: You haven't run the AI analysis yet. These are default or manually selected shades.\n\n";
+    } else {
+        report += "🔬 SKIN ANALYSIS RESULTS:\n";
+        report += `- ${surfaceText}\n`;
+        report += `- ${underText}\n\n`;
+    }
+
+    report += "🎨 CURRENT MAKEUP PROFILE:\n";
+    products.forEach(prod => {
+        let status = activeMakeups.has(prod) ? "[ON] " : "[OFF]";
+        let hex = makeupState[prod].hex.toUpperCase();
+        let alpha = Math.round(makeupState[prod].alpha * 100);
+        let name = prod.charAt(0).toUpperCase() + prod.slice(1);
+        
+        // Formatting for neat alignment
+        report += `${status} ${name.padEnd(12, ' ')} | Shade: ${hex} | Intensity: ${alpha}%\n`;
+    });
+
+    report += "\n=================================================\n";
+    report += "Bring these Hex codes to your favorite beauty brand's matching tool to find physical products!";
+
+    // Create and trigger download
+    const blob = new Blob([report], {type: 'text/plain'});
+    const link = document.createElement('a');
+    link.download = 'My_Custom_Beauty_Report.txt';
+    link.href = window.URL.createObjectURL(blob);
+    link.click();
+}
+
+// MediaPipe Loop
+mesh.onResults(results => {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(video,0,0, canvas.width, canvas.height);
+
+  if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
+  const lm = results.multiFaceLandmarks[0];
+
+  if(activeMakeups.has("foundation")) drawFoundation(lm);
+  if(activeMakeups.has("contour")) drawContour(lm);
+  if(activeMakeups.has("concealer")) drawConcealer(lm);
+  if(activeMakeups.has("blush")) drawBlush(lm);
+  if(activeMakeups.has("lipstick")) drawLipstick(lm);
+});
+
+const camera = new Camera(video, { 
+  onFrame: async () => { await mesh.send({ image: video }); },
+  width: 640, height: 480
+});
+camera.start();
+
+// --- DRAWING ENGINE ---
+function drawFoundation(lm){
+    ctx.save(); ctx.beginPath();
+    const face=[10,109,67,103,54,21,162,127,109,67,234,93,132,58,172,136,150,149,176,148,152,377,400,378,379,365,397,288,361,323,454,356,389,251,284,332,297,338];
+    face.forEach((i,idx)=>{
+        let p=lm[i], x=p.x*canvas.width, y=p.y*canvas.height;
+        idx===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.closePath(); ctx.clip();
+    ctx.fillStyle = getRgba('foundation');
+    ctx.filter = "blur(15px)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.filter = "none"; ctx.restore();
+}
+
+function drawConcealer(lm){
+    ctx.save();
+    let left=lm[159], lx=left.x*canvas.width, ly=left.y*canvas.height+30;
+    let right=lm[386], rx=right.x*canvas.width, ry=right.y*canvas.height+30;
+    
+    [ {x:lx, y:ly}, {x:rx, y:ry} ].forEach(pos => {
+        let g = ctx.createRadialGradient(pos.x, pos.y, 5, pos.x, pos.y, 45);
+        g.addColorStop(0, getRgba('concealer'));
+        g.addColorStop(1, "transparent");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.ellipse(pos.x, pos.y, 45, 25, 0.2, 0, 2*Math.PI); ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawContour(lm){
+    ctx.save();
+    let left=lm[205], lx=left.x*canvas.width, ly=left.y*canvas.height;
+    let right=lm[425], rx=right.x*canvas.width, ry=right.y*canvas.height;
+    
+    [ {x:lx, y:ly, angle: -0.5}, {x:rx, y:ry, angle: 0.5} ].forEach(pos => {
+        let g = ctx.createRadialGradient(pos.x, pos.y, 2, pos.x, pos.y, 40);
+        g.addColorStop(0, getRgba('contour'));
+        g.addColorStop(1, "transparent");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.ellipse(pos.x, pos.y, 40, 15, pos.angle, 0, 2*Math.PI); ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawBlush(lm){
+    ctx.save();
+    let left=lm[50], lx=left.x*canvas.width, ly=left.y*canvas.height;
+    let right=lm[280], rx=right.x*canvas.width, ry=right.y*canvas.height;
+    
+    [ {x:lx, y:ly}, {x:rx, y:ry} ].forEach(pos => {
+        let g = ctx.createRadialGradient(pos.x, pos.y, 5, pos.x, pos.y, 35);
+        g.addColorStop(0, getRgba('blush'));
+        g.addColorStop(1, "transparent");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, 35, 0, 2*Math.PI); ctx.fill();
+    });
+    ctx.restore();
+}
+
+function drawLipstick(lm){
+    const outer=[61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+    const inner=[78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191];
+    
+    ctx.beginPath();
+    outer.forEach((i,idx)=>{
+        let p=lm[i], x=p.x*canvas.width, y=p.y*canvas.height;
+        idx===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    inner.forEach((i,idx)=>{
+        let p=lm[i], x=p.x*canvas.width, y=p.y*canvas.height;
+        idx===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.closePath();
+    
+    ctx.fillStyle = getRgba('lipstick');
+    ctx.filter = "blur(1px)";
+    ctx.fill("evenodd");
+    ctx.filter = "none";
+}
+</script>
+</body>
+</html>
