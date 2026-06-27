@@ -1,7 +1,7 @@
 # Beauty AR Studio — Real-Time AI Makeup & Skin Tone Analysis
 # Shade IQ
 
-Glamour AR Studio is a premium, real-time virtual makeup try-on and skin analysis platform. Built as a unified full-stack application, it leverages cutting-edge computer vision libraries (MediaPipe Tasks-Vision and OpenCV) alongside a robust Django REST Framework backend. 
+Beauty AR Studio is a premium, real-time virtual makeup try-on and skin analysis platform. Built as a unified full-stack application, it leverages cutting-edge computer vision libraries (MediaPipe Tasks-Vision and OpenCV) alongside a robust Django REST Framework backend. 
 
 The application offers real-time 478-point facial landmark tracking with zero-jitter filtering, GPU-accelerated canvas rendering, dual-mode skin analysis (automated neural/fallback cascades & screen color eye-dropping), a custom Code 128 barcode scanning and inventory integration, and automated reporting services.
 
@@ -78,7 +78,7 @@ Finals/
 │   ├── manage.py             # Django orchestrator entry point
 │   ├── requirements.txt      # Backend Python dependencies
 │   ├── db.sqlite3            # SQLite database containing persistence tables
-│   ├── glamour/              # Main Django project settings and routing
+│   ├── Beauty/              # Main Django project settings and routing
 │   │   ├── settings.py
 │   │   └── urls.py
 │   ├── makeup/               # Core application logic, endpoints, and models
