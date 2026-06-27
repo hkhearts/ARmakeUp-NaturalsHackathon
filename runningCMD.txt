@@ -1,0 +1,24 @@
+To run the application locally, open two separate terminal windows/tabs and execute the following commands:
+
+Terminal 1: Start the Django Backend Server
+Navigate to the backend directory, install the required packages (if not already installed), apply database migrations, and start the development server.
+
+powershell
+cd "d:\Study\Projects\Naturals Hack\Finals\backend"
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver 8000
+Terminal 2: Start the Frontend Web Server
+Open a new terminal window, navigate to the frontend directory, and start a simple static HTTP server.
+
+powershell
+cd "d:\Study\Projects\Naturals Hack\Finals\frontend"
+python -m http.server 3000
+Access the Application
+Once both servers are running:
+
+Open your web browser (Google Chrome is recommended for optimal performance and EyeDropper API support).
+Go to http://localhost:3000 to view the application.
+NOTE
+
+Make sure to allow camera access in your browser when prompted on the camera page so the real-time AR face tracking can activate.

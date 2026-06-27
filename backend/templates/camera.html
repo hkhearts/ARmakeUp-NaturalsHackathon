@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Naturals AR Studio - Live camera view with real-time AR makeup try-on and face tracking.">
+    <title>Naturals AR Studio - Camera</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F484;</text></svg>">
+</head>
+<body>
+    {% csrf_token %}
+    <div id="user-modal" class="modal-overlay visible">
+        <div class="modal-box glass-panel">
+            <h2 class="modal-title">Welcome to Naturals AR Studio</h2>
+            <p class="modal-sub">Enter your name to personalize your experience.</p>
+            <input type="text" id="user-name-input" class="modal-input" placeholder="Enter your name" autocomplete="name" autofocus>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn btn-primary modal-btn" id="login-user-btn" style="flex:1;">Login as User</button>
+                <button class="btn btn-ghost modal-btn" id="login-admin-btn" style="flex:1;">Login as Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="camera-page">
+        <div class="canvas-area">
+            <video id="webcam-video" autoplay playsinline muted></video>
+            <canvas id="display-canvas"></canvas>
+            <div class="status-bar">
+                <span id="face-status" class="face-status not-detected">Initializing...</span>
+                <span id="fps-counter">-- FPS</span>
+                <span id="user-display" class="user-display"></span>
+            </div>
+            <div id="ai-character-container" class="ai-character-container">
+                <canvas id="character-canvas" style="display:none"></canvas>
+                <div id="ai-speech-bubble" class="speech-bubble hidden"><p id="ai-speech-text"></p></div>
+                <div class="character-controls">
+                    <button class="char-btn" id="ai-speak-btn">Ask Stylist</button>
+                    <button class="char-btn" id="ai-listen-btn">Voice Input</button>
+                    <button class="char-btn" id="ai-toggle-btn">Hide</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-panel" id="results-panel">
+            <h3 class="results-title">Skin Analysis</h3>
+            <div class="result-item"><div class="result-label">Mode</div><div class="result-value" id="result-mode">--</div></div>
+            <div class="result-item"><div class="result-label">Undertone</div><div id="result-undertone" class="undertone-badge">--</div></div>
+            <div class="result-item"><div class="result-label">Surface</div><div class="result-value" id="result-surface-tone">--</div></div>
+            <div class="result-item"><div class="result-label">Lightness</div><div class="result-value" id="result-lightness">--</div></div>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px 0;">
+            <div class="result-item"><div class="result-label">Foundation</div><div class="swatch-grid" id="foundation-swatches"></div></div>
+            <div class="result-item"><div class="result-label">Lipstick</div><div class="swatch-grid" id="lipstick-swatches"></div></div>
+            <div class="result-item"><div class="result-label">Blush</div><div class="swatch-grid" id="blush-swatches"></div></div>
+            <div class="result-item"><div class="result-label">Bindi</div><div class="swatch-grid" id="bindi-swatches"></div></div>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.1);margin:12px 0;">
+            <button class="action-btn action-btn-clear" id="list-products-btn" style="width:100%; margin-bottom:10px;">Show Database Products</button>
+            <div id="matching-products-list" style="display:none; margin-bottom:10px; padding:10px; background:rgba(0,0,0,0.4); border-radius:8px; max-height:200px; overflow-y:auto; font-size:0.85rem;"></div>
+            <button class="action-btn action-btn-capture" id="report-btn" style="width:100%">Generate Report</button>
+        </div>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div><a href="/" class="back-link">Back</a><div class="sidebar-title">Naturals AR Studio</div></div>
+                <button class="eyedropper-btn" id="toggle-results-btn">Results</button>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-label">MAKEUP CATEGORIES</div>
+                <div id="makeup-buttons-container"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-label">PRESET LOOKS</div>
+                <div id="presets-container"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-label">SKIN ANALYSIS</div>
+                <div class="analyze-section">
+                    <button class="analyze-btn analyze-btn-auto" id="analyze-auto-btn">Auto Analyze</button>
+                    <div class="analyze-row">
+                        <input type="color" id="skin-color-picker" value="#D4A87A" title="Pick skin color">
+                        <button class="analyze-btn analyze-btn-manual" id="analyze-manual-btn">Analyze Color</button>
+                        <button class="eyedropper-btn" id="eyedropper-btn">Pick</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-label">BARCODE SCANNER</div>
+                <div class="analyze-section">
+                    <label class="file-upload-label"><input type="file" id="barcode-file-input" accept="image/*" style="display:none"><span class="btn btn-ghost" style="width:100%;display:block;text-align:center">Upload Barcode Image</span></label>
+                    <textarea id="barcode-manual-input" class="barcode-textarea" rows="3" placeholder="Or paste product data:&#10;colour : red&#10;colour_code : #FF0000&#10;RGB value : RGB(255,0,0)"></textarea>
+                    <button class="analyze-btn analyze-btn-manual" id="barcode-manual-btn" style="width:100%">Submit Product Data</button>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn action-btn-capture" id="capture-btn">Capture Look</button>
+                <button class="action-btn action-btn-clear" id="clear-btn">Clear All</button>
+                <a href="/database/" class="action-btn action-btn-clear" style="text-align:center;text-decoration:none;">View Database</a>
+            </div>
+        </aside>
+    </div>
+
+    <div id="report-modal" class="modal-overlay">
+        <div class="modal-box glass-panel report-modal-box">
+            <div class="report-header"><h2>Skin Analysis Report</h2><button class="modal-close" id="report-close-btn">X</button></div>
+            <div id="report-content" class="report-content"></div>
+            <button class="btn btn-primary" id="report-download-btn" style="margin-top:16px;width:100%;">Download Report</button>
+        </div>
+    </div>
+
+    <script>
+        window.STATIC_URL = '{% static "" %}';
+        window.CHARACTER_MODEL_URL = '{% static "character/scene.gltf" %}';
+    </script>
+    <script type="module" src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

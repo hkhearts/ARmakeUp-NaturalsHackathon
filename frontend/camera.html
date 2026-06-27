@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Glamour AR Camera — Real-time virtual makeup try-on with AI face tracking.">
+    <title>Glamour AR — Camera</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💄</text></svg>">
+</head>
+<body>
+    <div class="camera-page">
+        <!-- ======================================================== -->
+        <!-- CANVAS AREA — Webcam + Makeup Overlay -->
+        <!-- ======================================================== -->
+        <div class="canvas-area">
+            <video id="webcam-video" autoplay playsinline muted></video>
+            <canvas id="display-canvas"></canvas>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="face-status" class="face-status not-detected">👤 Initializing...</span>
+                <span id="fps-counter">-- FPS</span>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- RESULTS PANEL (slides in from right of canvas) -->
+        <!-- ======================================================== -->
+        <div class="results-panel" id="results-panel">
+            <h3 class="results-title">Skin Analysis</h3>
+
+            <div class="result-item">
+                <div class="result-label">Detection Mode</div>
+                <div class="result-value" id="result-mode">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Undertone</div>
+                <div id="result-undertone" class="undertone-badge">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Surface Tone</div>
+                <div class="result-value" id="result-surface-tone">—</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Lightness</div>
+                <div class="result-value" id="result-lightness">—</div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid var(--border-glass); margin: 16px 0;">
+
+            <!-- Recommended swatches per category appear here -->
+            <div class="result-item">
+                <div class="result-label">Recommended Foundation</div>
+                <div class="swatch-grid" id="foundation-swatches"></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Recommended Lipstick</div>
+                <div class="swatch-grid" id="lipstick-swatches"></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Recommended Blush</div>
+                <div class="swatch-grid" id="blush-swatches"></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Recommended Contour</div>
+                <div class="swatch-grid" id="contour-swatches"></div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Recommended Concealer</div>
+                <div class="swatch-grid" id="concealer-swatches"></div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SIDEBAR — Controls -->
+        <!-- ======================================================== -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Header -->
+            <div class="sidebar-header">
+                <div>
+                    <a href="index.html" class="back-link">← Back</a>
+                    <div class="sidebar-title">Glamour AR</div>
+                </div>
+                <button class="eyedropper-btn" id="toggle-results-btn" title="Toggle Results">📊</button>
+            </div>
+
+            <!-- Makeup Categories -->
+            <div class="sidebar-section">
+                <div class="section-label">Makeup</div>
+                <div class="category-grid">
+                    <button class="category-btn" data-category="foundation" id="btn-foundation">
+                        <span class="category-icon">🧴</span>Foundation
+                    </button>
+                    <button class="category-btn" data-category="lipstick" id="btn-lipstick">
+                        <span class="category-icon">💋</span>Lipstick
+                    </button>
+                    <button class="category-btn" data-category="blush" id="btn-blush">
+                        <span class="category-icon">🌸</span>Blush
+                    </button>
+                    <button class="category-btn" data-category="contour" id="btn-contour">
+                        <span class="category-icon">🖌️</span>Contour
+                    </button>
+                    <button class="category-btn" data-category="eyeshadow" id="btn-eyeshadow">
+                        <span class="category-icon">👁️</span>Eyeshadow
+                    </button>
+                    <button class="category-btn" data-category="eyeliner" id="btn-eyeliner">
+                        <span class="category-icon">✏️</span>Eyeliner
+                    </button>
+                </div>
+            </div>
+
+            <!-- Color Panels (expand when category selected) -->
+            <div class="color-panel" id="foundation-panel">
+                <div class="color-panel-label">Foundation Shades <span id="foundation-color-label"></span></div>
+                <div class="swatch-grid" id="foundation-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="foundation" min="0" max="1" step="0.01" value="0.18">
+                    <span class="intensity-value" id="foundation-intensity-label">18%</span>
+                </div>
+            </div>
+
+            <div class="color-panel" id="lipstick-panel">
+                <div class="color-panel-label">Lipstick Shades <span id="lipstick-color-label"></span></div>
+                <div class="swatch-grid" id="lipstick-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="lipstick" min="0" max="1" step="0.01" value="0.45">
+                    <span class="intensity-value" id="lipstick-intensity-label">45%</span>
+                </div>
+            </div>
+
+            <div class="color-panel" id="blush-panel">
+                <div class="color-panel-label">Blush Shades <span id="blush-color-label"></span></div>
+                <div class="swatch-grid" id="blush-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="blush" min="0" max="1" step="0.01" value="0.28">
+                    <span class="intensity-value" id="blush-intensity-label">28%</span>
+                </div>
+            </div>
+
+            <div class="color-panel" id="contour-panel">
+                <div class="color-panel-label">Contour Shades <span id="contour-color-label"></span></div>
+                <div class="swatch-grid" id="contour-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="contour" min="0" max="1" step="0.01" value="0.22">
+                    <span class="intensity-value" id="contour-intensity-label">22%</span>
+                </div>
+            </div>
+
+            <div class="color-panel" id="eyeshadow-panel">
+                <div class="color-panel-label">Eyeshadow Shades <span id="eyeshadow-color-label"></span></div>
+                <div class="swatch-grid" id="eyeshadow-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="eyeshadow" min="0" max="1" step="0.01" value="0.30">
+                    <span class="intensity-value" id="eyeshadow-intensity-label">30%</span>
+                </div>
+            </div>
+
+            <div class="color-panel" id="eyeliner-panel">
+                <div class="color-panel-label">Eyeliner Shades <span id="eyeliner-color-label"></span></div>
+                <div class="swatch-grid" id="eyeliner-swatches-sidebar"></div>
+                <div class="slider-row">
+                    <span class="slider-label">Intensity</span>
+                    <input type="range" class="intensity-slider" data-category="eyeliner" min="0" max="1" step="0.01" value="0.60">
+                    <span class="intensity-value" id="eyeliner-intensity-label">60%</span>
+                </div>
+            </div>
+
+            <!-- Preset Looks -->
+            <div class="sidebar-section">
+                <div class="section-label">Preset Looks</div>
+                <div id="presets-container"></div>
+            </div>
+
+            <!-- Skin Analysis (Auto + Manual) -->
+            <div class="sidebar-section">
+                <div class="section-label">Skin Analysis</div>
+                <div class="analyze-section">
+                    <!-- Auto analyze -->
+                    <button class="analyze-btn analyze-btn-auto" id="analyze-auto-btn">
+                        🔍 Auto Analyze
+                    </button>
+
+                    <!-- Manual analyze -->
+                    <div class="analyze-row">
+                        <input type="color" id="skin-color-picker" value="#D4A87A" title="Pick your skin color">
+                        <button class="analyze-btn analyze-btn-manual" id="analyze-manual-btn">
+                            🎨 Analyze Color
+                        </button>
+                        <button class="eyedropper-btn" id="eyedropper-btn" title="Pick color from screen">💧</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="action-btn action-btn-capture" id="capture-btn">
+                    📸 Capture Look
+                </button>
+                <button class="action-btn action-btn-clear" id="clear-btn">
+                    🗑️ Clear All
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- App Script (ES Module) -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

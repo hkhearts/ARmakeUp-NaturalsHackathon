@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Naturals AR Studio - AI-powered virtual makeup try-on with real-time face tracking and skin analysis.">
+    <title>Naturals AR Studio - Virtual Makeup Try-On</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1F484;</text></svg>">
+</head>
+<body>
+    <section class="landing-hero">
+        <div class="hero-badge">
+            <span>AI-Powered Virtual Makeup</span>
+        </div>
+        <h1 class="hero-title">Naturals AR Studio</h1>
+        <p class="hero-sub">
+            Real-time AR makeup with face tracking, skin tone analysis, AI fashion stylist, and barcode product scanning. 
+            Powered by 478-point face mesh technology.
+        </p>
+        <div class="hero-cta">
+            <a href="/camera/" class="btn btn-primary" id="try-makeup-btn">Try Makeup Live</a>
+        </div>
+        <div style="margin-top: 18px;">
+            <a href="/database/" class="btn btn-ghost" id="view-db-btn">View Database</a>
+        </div>
+    </section>
+
+    <section class="features-section">
+        <div class="feature-card">
+            <div class="feature-icon-text">Face Mesh</div>
+            <h3 class="feature-title">Real-Time Face Tracking</h3>
+            <p class="feature-desc">MediaPipe FaceLandmarker tracks every facial contour in real-time with sub-pixel precision.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-text">AI Analysis</div>
+            <h3 class="feature-title">Skin Tone Detection</h3>
+            <p class="feature-desc">Automatic undertone detection using LAB color space. Get personalized shade recommendations.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-text">Rendering</div>
+            <h3 class="feature-title">Realistic Makeup</h3>
+            <p class="feature-desc">Multiply and overlay blending with feathered edges. Makeup that looks natural on your face.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-text">Barcode</div>
+            <h3 class="feature-title">Product Scanner</h3>
+            <p class="feature-desc">Scan product barcodes to extract color data and store it in the database for future reference.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-text">AI Stylist</div>
+            <h3 class="feature-title">Virtual Fashion Assistant</h3>
+            <p class="feature-desc">3D AI character that speaks, listens, and suggests makeup looks based on your skin analysis.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-text">Reports</div>
+            <h3 class="feature-title">Analysis Reports</h3>
+            <p class="feature-desc">Generate detailed reports with screenshots, skin analysis data, and color recommendations.</p>
+        </div>
+    </section>
+
+    <footer style="text-align:center; padding:40px 24px; color:var(--text-muted); font-size:0.82rem;">
+        <p>Naturals AR Studio &mdash; Built with MediaPipe, Canvas 2D, Three.js &amp; Django</p>
+    </footer>
+</body>
+</html>

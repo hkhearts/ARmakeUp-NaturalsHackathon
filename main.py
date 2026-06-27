@@ -1,0 +1,1 @@
+print("Hello Cosmetics World")

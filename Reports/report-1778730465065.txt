@@ -1,0 +1,7 @@
+SKIN ANALYSIS REPORT
+========================================
+User: hk
+Date: 2026-05-14 09:11:09
+Undertone: neutral
+Surface: medium
+Lightness: 52.36

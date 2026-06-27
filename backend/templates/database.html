@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naturals AR Studio - Database</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="db-page">
+        <div class="db-header">
+            <a href="/" class="back-link">Back to Home</a>
+            <h1 class="db-title">Database Viewer</h1>
+            <p class="db-sub">View all skin analyses, scanned products, captured photos, and saved looks.</p>
+            <button class="btn btn-primary" id="db-refresh-btn">Refresh Data</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="db-tabs">
+            <button class="db-tab active" data-tab="products">Scanned Products</button>
+            <button class="db-tab" data-tab="analyses">Skin Analyses</button>
+            <button class="db-tab" data-tab="photos">Captured Photos</button>
+            <button class="db-tab" data-tab="looks">Saved Looks</button>
+        </div>
+
+        <!-- Products Table -->
+        <div class="db-tab-content active" id="tab-products">
+            <div class="db-add-product glass-panel admin-only" style="margin-bottom: 20px; padding: 15px; display: none;">
+                <h3>Add Product (Admin Only)</h3>
+                <div style="margin-bottom: 10px;">
+                    <label>Category:</label>
+                    <select id="db-category-select" class="modal-input" style="width:100%; margin-top:5px;">
+                        <option value="Foundation">Foundation</option>
+                        <option value="Contour">Contour</option>
+                        <option value="Lipstick">Lipstick</option>
+                        <option value="Blush">Blush</option>
+                        <option value="Bindi">Bindi</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <label>Option 1: Scan Barcode Image</label>
+                    <label class="file-upload-label" style="display:block; margin-top:5px;">
+                        <input type="file" id="db-barcode-file" accept="image/*" style="display:none">
+                        <span class="btn btn-ghost" style="width:100%;display:block;text-align:center">Upload Barcode Image</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label>Option 2: Manual Entry</label>
+                    <textarea id="db-manual-input" class="modal-input" rows="3" style="width: 100%; resize: vertical; margin-top:5px;" placeholder="Paste product data here:&#10;colour : red&#10;colour_code : #FF0000&#10;RGB value : RGB(255,0,0)&#10;product : Red Lipstick"></textarea>
+                    <button class="btn btn-primary" id="db-add-product-btn" style="margin-top: 10px;">Add Manually</button>
+                </div>
+            </div>
+            <div class="db-filter" style="margin-bottom: 10px;">
+                <label>Filter by Category: </label>
+                <select id="db-filter-category" class="modal-input"
+                        style="width:200px; padding:4px; color:black; background:white;">
+                    <option value="All">All Categories</option>
+                    <option value="Foundation">Foundation</option>
+                    <option value="Contour">Contour</option>
+                    <option value="Lipstick">Lipstick</option>
+                    <option value="Blush">Blush</option>
+                    <option value="Bindi">Bindi</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <table class="db-table" id="products-table">
+                <thead>
+                    <tr><th>ID</th><th>Category</th><th>Product Name</th><th>Color</th><th>Hex</th><th>RGB</th><th>Scanned By</th><th>Date</th><th>Image</th><th class="admin-only" style="display: none;">Actions</th></tr>
+                </thead>
+                <tbody id="products-tbody"></tbody>
+            </table>
+            <p class="db-empty" id="products-empty">No scanned products yet.</p>
+        </div>
+
+        <!-- Analyses Table -->
+        <div class="db-tab-content" id="tab-analyses">
+            <table class="db-table" id="analyses-table">
+                <thead>
+                    <tr><th>ID</th><th>User</th><th>Undertone</th><th>Surface Tone</th><th>Lightness</th><th>Mode</th><th>Date</th></tr>
+                </thead>
+                <tbody id="analyses-tbody"></tbody>
+            </table>
+            <p class="db-empty" id="analyses-empty">No analyses yet.</p>
+        </div>
+
+        <!-- Photos Table -->
+        <div class="db-tab-content" id="tab-photos">
+            <div class="photo-grid" id="photos-grid"></div>
+            <p class="db-empty" id="photos-empty">No captured photos yet.</p>
+        </div>
+
+        <!-- Looks Table -->
+        <div class="db-tab-content" id="tab-looks">
+            <table class="db-table" id="looks-table">
+                <thead>
+                    <tr><th>ID</th><th>Name</th><th>Foundation</th><th>Lipstick</th><th>Blush</th><th>Contour</th><th>Bindi</th><th>Date</th></tr>
+                </thead>
+                <tbody id="looks-tbody"></tbody>
+            </table>
+            <p class="db-empty" id="looks-empty">No saved looks yet.</p>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = '/api';
+
+    let allProducts = [];
+
+    async function loadData() {
+        try {
+            const resp = await fetch(`${API_BASE}/all-data/`);
+            const data = await resp.json();
+            if (!data.success) return;
+
+            allProducts = data.products;
+            renderProducts(allProducts);
+            renderAnalyses(data.analyses);
+            renderPhotos(data.photos);
+            renderLooks(data.looks);
+        } catch (err) {
+            console.error('Failed to load data:', err);
+        }
+    }
+
+    document.getElementById('db-filter-category')?.addEventListener('change', (e) => {
+        const cat = e.target.value;
+        if (cat === 'All') renderProducts(allProducts);
+        else {
+            const filtered = allProducts.filter(p => (p.category && p.category.toLowerCase() === cat.toLowerCase()) || (p.product_name && p.product_name.toLowerCase().includes(cat.toLowerCase())));
+            renderProducts(filtered);
+        }
+    });
+
+    function renderProducts(products) {
+        const tbody = document.getElementById('products-tbody');
+        const empty = document.getElementById('products-empty');
+        tbody.innerHTML = '';
+        empty.style.display = products.length ? 'none' : 'block';
+
+        const userRole = localStorage.getItem('userRole') || 'user';
+        const isAdmin = userRole === 'admin';
+
+        products.forEach(p => {
+            const tr = document.createElement('tr');
+            const colorSwatch = p.colour_hex ? `<span class="db-color-swatch" style="background:${p.colour_hex}"></span> ${p.colour_hex}` : '--';
+            const imgCell = p.barcode_image ? `<img src="/media/${p.barcode_image}" class="db-thumb" alt="barcode">` : '--';
+            const actionCell = isAdmin ? `<td><button class="btn btn-ghost" style="padding:4px 8px;font-size:0.8rem;background:#ff4c4c;color:white;" onclick="deleteProduct(${p.id})">Del</button></td>` : '';
+            
+            tr.innerHTML = `<td>${p.id}</td><td>${p.category || '--'}</td><td>${p.product_name || '--'}</td><td>${p.colour_name || '--'}</td><td>${colorSwatch}</td><td>${p.colour_rgb || '--'}</td><td>${p.scanned_by || '--'}</td><td>${new Date(p.created_at).toLocaleDateString()}</td><td>${imgCell}</td>${actionCell}`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.deleteProduct = async function(id) {
+        if (!confirm('Are you sure you want to delete this product?')) return;
+        try {
+            const resp = await fetch(`${API_BASE}/products/${id}/delete/`, { method: 'DELETE' });
+            const data = await resp.json();
+            if (data.success) loadData();
+            else alert('Delete failed: ' + data.error);
+        } catch (e) {
+            console.error(e);
+            alert('Error deleting product');
+        }
+    };
+
+    function renderAnalyses(analyses) {
+        const tbody = document.getElementById('analyses-tbody');
+        const empty = document.getElementById('analyses-empty');
+        tbody.innerHTML = '';
+        empty.style.display = analyses.length ? 'none' : 'block';
+
+        analyses.forEach(a => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${a.id}</td><td>${a.user_name || '--'}</td><td><span class="undertone-badge ${a.undertone}">${a.undertone}</span></td><td>${a.surface_tone}</td><td>${a.lightness}</td><td>${a.mode}</td><td>${new Date(a.created_at).toLocaleDateString()}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPhotos(photos) {
+        const grid = document.getElementById('photos-grid');
+        const empty = document.getElementById('photos-empty');
+        grid.innerHTML = '';
+        empty.style.display = photos.length ? 'none' : 'block';
+
+        photos.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'photo-card glass-panel';
+            card.innerHTML = `<img src="/media/${p.image}" class="photo-img" alt="capture"><div class="photo-info"><strong>${p.user_name}</strong><br><small>${new Date(p.created_at).toLocaleString()}</small>${p.notes ? '<br><span>' + p.notes + '</span>' : ''}</div>`;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderLooks(looks) {
+        const tbody = document.getElementById('looks-tbody');
+        const empty = document.getElementById('looks-empty');
+        tbody.innerHTML = '';
+        empty.style.display = looks.length ? 'none' : 'block';
+
+        looks.forEach(l => {
+            const tr = document.createElement('tr');
+            const sw = c => c ? `<span class="db-color-swatch" style="background:${c}"></span>` : '--';
+            tr.innerHTML = `<td>${l.id}</td><td>${l.name}</td><td>${sw(l.foundation_color)}</td><td>${sw(l.lipstick_color)}</td><td>${sw(l.blush_color)}</td><td>${sw(l.contour_color)}</td><td>${sw(l.bindi_color)}</td><td>${new Date(l.created_at).toLocaleDateString()}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Tab switching
+    document.querySelectorAll('.db-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.db-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.db-tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.getElementById('db-refresh-btn').addEventListener('click', loadData);
+    
+    document.getElementById('db-add-product-btn').addEventListener('click', async () => {
+        const content = document.getElementById('db-manual-input').value;
+        const category = document.getElementById('db-category-select').value;
+        if (!content.trim()) return alert('Please enter product data');
+        try {
+            const resp = await fetch(`${API_BASE}/scan-barcode-manual/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content, category: category, user_name: 'Admin' })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                alert('Product added successfully!');
+                document.getElementById('db-manual-input').value = '';
+                loadData();
+            } else {
+                alert('Failed to add product: ' + data.error);
+            }
+        } catch(e) {
+            console.error('Error adding product:', e);
+            alert('Error adding product');
+        }
+    });
+
+    document.getElementById('db-barcode-file').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const category = document.getElementById('db-category-select').value;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            try {
+                const b64 = evt.target.result;
+                const resp = await fetch(`${API_BASE}/scan-barcode/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({barcode_image: b64, category: category, user_name: 'Admin'})
+                });
+                const data = await resp.json();
+                if(data.success) { 
+                    alert('Barcode scanned and product added!'); 
+                    loadData(); 
+                } else alert('Failed: ' + data.error);
+            } catch(err) {
+                console.error(err);
+                alert('Error scanning barcode');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function applyRoles() {
+        const userRole = localStorage.getItem('userRole') || 'user';
+        if (userRole === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => {
+                if (el.tagName === 'TH' || el.tagName === 'TD') el.style.display = 'table-cell';
+                else el.style.display = 'block';
+            });
+        } else {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        }
+    }
+
+    applyRoles();
+    loadData();
+    </script>
+</body>
+</html>
