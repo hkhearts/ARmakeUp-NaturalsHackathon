@@ -1,5 +1,6 @@
-# Beauty AR Studio — Real-Time AI Makeup & Skin Tone Analysis
 # Shade IQ
+# Beauty AR Studio — Real-Time AI Makeup & Skin Tone Analysis
+
 
 Beauty AR Studio is a premium, real-time virtual makeup try-on and skin analysis platform. Built as a unified full-stack application, it leverages cutting-edge computer vision libraries (MediaPipe Tasks-Vision and OpenCV) alongside a robust Django REST Framework backend. 
 
